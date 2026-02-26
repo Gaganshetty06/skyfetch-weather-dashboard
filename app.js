@@ -1,16 +1,24 @@
-const API_KEY = "f66f9f2fbb772bdaa2ad42f25b643664";
+const API_KEY = "YOUR_API_KEY_HERE";
 
-function fetchWeather(city) {
-  const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`;
+const cityInput = document.getElementById("cityInput");
+const searchBtn = document.getElementById("searchBtn");
+const message = document.getElementById("message");
 
-  axios.get(url)
-    .then(response => {
-      console.log(response.data);
-      displayWeather(response.data);
-    })
-    .catch(error => {
-      console.error("Error fetching weather:", error);
-    });
+async function getWeather(city) {
+  try {
+    showLoading();
+    searchBtn.disabled = true;
+
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`;
+    const response = await axios.get(url);
+
+    displayWeather(response.data);
+    message.innerHTML = "";
+  } catch (error) {
+    showError("❌ City not found. Please try again.");
+  } finally {
+    searchBtn.disabled = false;
+  }
 }
 
 function displayWeather(data) {
@@ -18,10 +26,38 @@ function displayWeather(data) {
   document.getElementById("temp").innerText = `🌡 ${data.main.temp} °C`;
   document.getElementById("desc").innerText = data.weather[0].description;
 
-  const iconCode = data.weather[0].icon;
+  const icon = data.weather[0].icon;
   document.getElementById("icon").src =
-    `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+    `https://openweathermap.org/img/wn/${icon}@2x.png`;
 }
 
-// Hardcoded city
-fetchWeather("London");
+function showError(msg) {
+  message.innerHTML = `<p class="error">${msg}</p>`;
+}
+
+function showLoading() {
+  message.innerHTML = `<div class="loader"></div>`;
+}
+
+// Button click
+searchBtn.addEventListener("click", () => {
+  const city = cityInput.value.trim();
+
+  if (!city) {
+    showError("⚠ Please enter a city name");
+    return;
+  }
+
+  getWeather(city);
+  cityInput.value = "";
+});
+
+// Enter key support
+cityInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    searchBtn.click();
+  }
+});
+
+// Initial message
+message.innerHTML = "<p>🔍 Search a city to see weather</p>";
